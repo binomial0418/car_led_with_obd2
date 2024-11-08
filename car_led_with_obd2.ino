@@ -36,16 +36,16 @@ void setup() {
   // Set Bluetooth name
   ELM_PORT.begin("ArduHUD", true);
 
-  // Set pairing pin
-  SerialBT.setPin(pinCode, strlen(pinCode));
-  // Connect to specific MAC address
-  if (ELM_PORT.connect(remoteAddress)) {
-    if (!myELM327.begin(ELM_PORT, false, 2000,'0',50)) {
-        Serial.println("Couldn't connect to OBD scanner");
-    } else { 
-      Serial.println("Connected to ELM327");
-    }  
-  }
+  // // Set pairing pin
+  // SerialBT.setPin(pinCode, strlen(pinCode));
+  // // Connect to specific MAC address
+  // if (ELM_PORT.connect(remoteAddress)) {
+  //   if (!myELM327.begin(ELM_PORT, false, 2000,'0',50)) {
+  //       Serial.println("Couldn't connect to OBD scanner");
+  //   } else { 
+  //     Serial.println("Connected to ELM327");
+  //   }  
+  // }
 }
 /*********************************************
 * loop setcion
@@ -183,7 +183,6 @@ void ConnectToElm327(){
   // Set pairing pin
   SerialBT.setPin(pinCode, strlen(pinCode));
   // Connect to specific MAC address
-  
   if (!ELM_PORT.connect(remoteAddress)) {
     DEBUG_PORT.println("Couldn't connect to OBD scanner - Phase 1");
   }
@@ -191,5 +190,7 @@ void ConnectToElm327(){
   
   if (!myELM327.begin(ELM_PORT, false, 2000,'0',50)) {
     Serial.println("Couldn't connect to OBD scanner - Phase 2");
+  } else {
+    Serial.println("Connected to ELM327");
   }
 }
