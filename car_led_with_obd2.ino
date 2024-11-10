@@ -11,7 +11,9 @@ BluetoothSerial SerialBT;
 
 ELM327 myELM327;
 // ELM327 Bluetooth device MAC address
+// 66:1E:32:F9:C1:F2
 uint8_t remoteAddress[] = { 0x13, 0xE0, 0x2F, 0x8D, 0x5A, 0xF1 };
+//uint8_t remoteAddress[] = { 0x66, 0x1E, 0x32, 0xF9, 0xC1, 0xF2 };
 // Pairing pin
 const char* pinCode = "1234";
 //定義讀取狀態，以door_open值開始讀
@@ -27,25 +29,44 @@ float mph = 0;
 int ledOnTimes = 0; 
 
 void setup() {
+#if LED_BUILTIN
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
+#endif
   pinMode(R1_PIN, OUTPUT); // for key power
   digitalWrite(R1_PIN, LOW);  // 初始狀態下關閉電源輸出
-
-  Serial.println("Start connect to OBD scanner - Phase 2");
+  // digitalWrite(R1_PIN, HIGH);  // 初始狀態下關閉電源輸出
+  // delay(1000);
+  // digitalWrite(R1_PIN, LOW);  // 初始狀態下關閉電源輸出
   DEBUG_PORT.begin(115200);
 
   // Set Bluetooth name
   ELM_PORT.begin("ArduHUD", true);
 
-  // // Set pairing pin
-  // SerialBT.setPin(pinCode, strlen(pinCode));
-  // // Connect to specific MAC address
-  // if (ELM_PORT.connect(remoteAddress)) {
-  //   if (!myELM327.begin(ELM_PORT, false, 2000,'0',50)) {
-  //       Serial.println("Couldn't connect to OBD scanner");
-  //   } else { 
-  //     Serial.println("Connected to ELM327");
-  //   }  
-  // }
+  // Set pairing pin
+  SerialBT.setPin(pinCode, strlen(pinCode));
+  // Connect to specific MAC address
+  for (int i = 0; i < 10; i++) {
+    if (!ELM_PORT.connect(remoteAddress)) {
+      DEBUG_PORT.println("Couldn't connect to OBD scanner - Phase 1");
+      delay(200);
+    } else {
+      break;
+    }
+  }
+  // Initialize ELM327
+  for (int i = 0; i < 10; i++) {
+    if (!myELM327.begin(ELM_PORT, false, 2000,'0',50)) {
+      Serial.println("Couldn't connect to OBD scanner - Phase 2");
+      delay(200);
+    } else {
+      break;
+    }
+  }
+  
+  Serial.println("Connected to ELM327");
+  // myELM327.sendCommand_Blocking("ATSH 770");
+  // myELM327.sendCommand_Blocking("ATSH 7A0");
 }
 /*********************************************
 * loop setcion
@@ -56,11 +77,11 @@ void loop() {
   
   //使用obd_state搭配switch循環讀取OBD2資料，順序為door_open-->door_lock-->speed
   //若ELM327斷線 重新連線
-  if (!myELM327.connected){
-    Serial.println("reconnect elm327");
-    ConnectToElm327();
-  }
-  if (myELM327.connected){
+  // if (!myELM327.connected){
+  //   Serial.println("reconnect elm327");
+  //   ConnectToElm327();
+  // }
+  // if (myELM327.connected){
     switch (obd_state){
       case door_open:{
         checkDoorOpenStats();
@@ -79,20 +100,26 @@ void loop() {
         break;
       }
     }
-  }
+  // }
   //set led on
   //Led點亮時間由繼電器控制（目前設定一次20秒），這邊只要短暫觸發繼電器即可。
   if (ledOn == true){
-    ledOnTimes++;
-    if (ledOnTimes < 60){
-      Serial.println("亮Led");
-      digitalWrite(R1_PIN, HIGH);
-      delay(200);
-      digitalWrite(R1_PIN, LOW);
-    }
-  } else {
-    ledOnTimes = 0;
+    Serial.println("亮Led");
+    digitalWrite(R1_PIN, HIGH);
+    delay(200);
+    digitalWrite(R1_PIN, LOW);
   }
+  // if (ledOn == true){
+  //   ledOnTimes++;
+  //   if (ledOnTimes < 60){
+  //     Serial.println("亮Led");
+  //     digitalWrite(R1_PIN, HIGH);
+  //     delay(200);
+  //     digitalWrite(R1_PIN, LOW);
+  //   }
+  // } else {
+  //   ledOnTimes = 0;
+  // }
   delay(1000);
 }
 /************************************
